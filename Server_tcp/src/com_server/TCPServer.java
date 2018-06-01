@@ -24,11 +24,7 @@ public class TCPServer extends Thread {
 
 				Socket clientSock = ss.accept();
 				saveFile(clientSock);
-
-				if (fileReceived) {
-					sendFileToClient();
-					fileReceived = false;
-				}
+				sendFileToClient();
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -42,25 +38,27 @@ public class TCPServer extends Thread {
 	private void saveFile(Socket clientSock) throws IOException {
 
 		DataInputStream ds = new DataInputStream(clientSock.getInputStream());
-
 		DataInputStream clientData = new DataInputStream(ds);
+		if (clientData.available() > 1) {
 
-		String fileName = clientData.readUTF();
-		OutputStream output = new FileOutputStream("d:\\data1\\" + fileName);
-		long size = clientData.readLong();
-		byte[] buffer = new byte[1024];
-		while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+			String fileName = clientData.readUTF();
 
-			output.write(buffer, 0, bytesRead);
+			BufferedReader br = null;
+			StringBuilder sb = new StringBuilder();
+			String line;
 
-			size -= bytesRead;
+			br = new BufferedReader(new InputStreamReader(ds));
+			File file = new File("d:\\data1\\" + fileName);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+
+			while ((line = br.readLine()) != null) {
+				writer.write(line + "--VERIFIED");
+				writer.newLine();
+			}
+			br.close();
+			writer.close();
+
 		}
-
-		// Closing the FileOutputStream handle
-		ds.close();
-		clientData.close();
-		output.close();
-		fileReceived = true;
 
 	}
 
@@ -70,9 +68,11 @@ public class TCPServer extends Thread {
 
 			FileUtil fileUtil = new FileUtil();
 			ArrayList<String> filelist = fileUtil.getFiles(folder);
+			if (filelist.size() > 0) {
 
-			for (String file : filelist) {
-				sendFile(file);
+				for (String file : filelist) {
+					sendFile(file);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -89,11 +89,8 @@ public class TCPServer extends Thread {
 
 		FileInputStream fis = new FileInputStream(myFile);
 		BufferedInputStream bis = new BufferedInputStream(fis);
-		// bis.read(mybytearray, 0, mybytearray.length);
-
 		DataInputStream dis = new DataInputStream(bis);
 		dis.readFully(mybytearray, 0, mybytearray.length);
-
 		OutputStream os = sock.getOutputStream();
 
 		// Sending file name and file size to the server
@@ -107,6 +104,8 @@ public class TCPServer extends Thread {
 		os.write(mybytearray, 0, mybytearray.length);
 		os.flush();
 
+		bis.close();
+		dis.close();
 		// Closing socket
 		os.close();
 		dos.close();

@@ -10,7 +10,7 @@ public class FileUtil {
 		for (final File fileEntry : folder.listFiles()) {
 
 			fileList.add(fileEntry.getPath());
-			// System.out.println(fileEntry.getName());
+
 
 		}
 		return fileList;
@@ -18,7 +18,6 @@ public class FileUtil {
 
 	public boolean deleteFile(String fileName) {
 		File file = new File(fileName);
-
 		if (file.delete()) {
 			return true;
 		} else {
